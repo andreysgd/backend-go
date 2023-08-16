@@ -42,3 +42,27 @@ func GetProducts() []Product {
 	defer db.Close()
 	return products
 }
+
+func CreateNewProduct(name, description string, price float64, units int) {
+	db := db.DataBaseConection()
+
+	insertIntoDB, err := db.Prepare("insert into products(name, description, price, units) values($1, $2, $3, $4)")
+	if err != nil {
+		panic(err.Error())
+	}
+	insertIntoDB.Exec(name, description, price, units)
+
+	defer db.Close()
+}
+
+func DeleteProduct(id string) {
+	db := db.DataBaseConection()
+
+	deleteFromDB, err := db.Prepare("delete from products where id=$1")
+	if err != nil {
+		panic(err.Error())
+	}
+	deleteFromDB.Exec(id)
+
+	defer db.Close()
+}
