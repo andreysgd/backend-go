@@ -13,7 +13,7 @@ type Product struct {
 func GetProducts() []Product {
 	db := db.DataBaseConection()
 
-	selectEachProduct, err := db.Query("select * from products")
+	selectEachProduct, err := db.Query("select * from products order by id asc")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -22,9 +22,10 @@ func GetProducts() []Product {
 	products := []Product{}
 
 	for selectEachProduct.Next() {
-		var id, units int
+		var id int
 		var name, description string
 		var price float64
+		var units int
 
 		err = selectEachProduct.Scan(&id, &name, &description, &price, &units)
 		if err != nil {
@@ -63,6 +64,49 @@ func DeleteProduct(id string) {
 		panic(err.Error())
 	}
 	deleteFromDB.Exec(id)
+
+	defer db.Close()
+}
+
+func EditProduct(id string) Product {
+	db := db.DataBaseConection()
+
+	dbProduct, err := db.Query("select * from products where id=$1", id)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	productToUpdate := Product{}
+
+	for dbProduct.Next() {
+		var id int
+		var name, description string
+		var price float64
+		var units int
+
+		err = dbProduct.Scan(&id, &name, &description, &price, &units)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		productToUpdate.Id = id
+		productToUpdate.Name = name
+		productToUpdate.Description = description
+		productToUpdate.Price = price
+		productToUpdate.Units = units
+	}
+	defer db.Close()
+	return productToUpdate
+}
+
+func UpdateProduct(id int, name, description string, price float64, units int) {
+	db := db.DataBaseConection()
+
+	updateDB, err := db.Prepare("update products set name=$1, description=$2, price=$3, units=$4 where id=$5")
+	if err != nil {
+		panic(err.Error())
+	}
+	updateDB.Exec(name, description, price, units, id)
 
 	defer db.Close()
 }
